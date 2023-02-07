@@ -1,0 +1,11 @@
+1 /home/user/projects/ anh.jpg 16777343 8080
+2 /home/user/project2/ anh2.jpg 16777343 112
+3 /home/user/projects/ anh.jpg 16777343 98
+4 /home/user/project2/ anh2.jpg 16777343 87
+5 /home/user/projects/ anh.jpg 16777343 1123
+6 anh/ anh.jpeg 16777343 9090
+7 /client/ anh.jpeg 16777343 9090
+8 /abc/ s 16777343 9090
+9 ../client/ anh.jpeg 16777343 9090
+10 ../client/ test.txt 16777343 9090
+11 client/ anh.jpeg 16777343 9090
