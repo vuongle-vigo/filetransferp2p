@@ -2,7 +2,7 @@
 # include <stdio.h>
 # include <errno.h>
 # include <string.h>
-#define SIZE 4 //bits
+#define SIZECODE 5  //bits
 
 enum Code { 
     ALLFILEINFOR = 1,
@@ -25,7 +25,6 @@ int decodeCode(char *data){
         return -1;
     }
     char* end = strstr(start+2, "$$");
-    // strcpy(pointer, end+2);
     strcpy(responseBuffer, start + 2);
     return atoi(responseBuffer);
 }
@@ -75,7 +74,8 @@ int codeHanlder(char *data, int code){
         fds.fd = sockfd;
         fds.events = POLLIN | POLLRDHUP;
         memset(buf, 0, sizeof(buf));
-        int recv1 = recvData(sockfd, buf, sizeof(buf));
+        // int recv1 = recvData(sockfd, buf, sizeof(buf));
+        read(sockfd, buf, SIZECODE);
         int codeRecvFile = decodeCode(buf); 
         printf("recv data: %s\n", buf);
         FILE *f = fopen("test1.jpeg", "wb");

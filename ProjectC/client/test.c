@@ -19,7 +19,7 @@ int decodeResponse(char *data, char *pointer){
 
 int main(){
   char pointer[10] = {0};
-  char *data = "$$231a$$";
+  char *data = "$$0231a$$";
   printf("%d\n", decodeResponse(data, pointer));
   if(*pointer==NULL){
     printf("error\n");

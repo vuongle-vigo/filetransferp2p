@@ -115,10 +115,9 @@ int main(int argc, char *argv[]){
             }
             char codeStr[10] = {0};
             encodeCode(STARTSENDFILE, codeStr);
-            // sleep(1);
             send(fds[3].fd, codeStr, strlen(codeStr), 0);
             int count = 0;
-            char ch;
+            char ch;    
             while(!feof(fp)){
                 ch = fgetc(fp);
                 int sent = send(fds[3].fd, &ch, 1, 0);
