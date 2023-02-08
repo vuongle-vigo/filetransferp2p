@@ -58,8 +58,8 @@ int main(int argc, char *argv[]){
     fds[2].fd = sockfd_sharefile; // fd wait connect from client want download file
     fds[2].events = POLLIN | POLLPRI; // check if have any data from client
     int codeResponse = NONE_REQUEST_;
+    FileShareInfor temp = (FileShareInfor)malloc(sizeof(struct fileShareInfor));
     while(1){
-        FileShareInfor temp = (FileShareInfor)malloc(sizeof(struct fileShareInfor));
         int ret = poll(fds, 4, TIMEOUT*1000);
         if(ret == -1){
             perror("poll");
@@ -75,20 +75,20 @@ int main(int argc, char *argv[]){
             //command hanlder
             codeResponse = commandHanlder(buf ,fds[1].fd);
         }
-        else if(fds[1].revents & POLLIN){//server data
+        if(fds[1].revents & POLLIN){//server data
             char buf[BUFFER_SIZE];
             codeResponse = resposeHanlder(fds[1].fd, codeResponse, temp);
-            free(temp);
             printf("response: %d\n", codeResponse);
         }
-        else if(fds[2].revents & POLLIN){//client data
+        if(fds[2].revents & POLLIN){//client data
             struct sockaddr_in client_download_addr;
+            printf("incoming connect\n");
             int clen = sizeof(client_download_addr);
             fds[3].fd = accept(fds[2].fd, (struct sockaddr *)&client_download_addr, &clen);
             fds[3].events = POLLIN;
             printf("accept to send file: %d\n", fds[3].fd);
         }
-        else if(fds[3].fd != 0 && (fds[3].revents & POLLIN)){
+        if(fds[3].fd != 0 && (fds[3].revents & POLLIN)){
             char buf[BUFFER_SIZE] = {0};
             int recv = recvData(fds[3].fd, buf, BUFFER_SIZE);
             char *filepath = realpath(buf, NULL);
