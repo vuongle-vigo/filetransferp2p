@@ -1,14 +1,7 @@
-# include <stdio.h>
 # include <string.h>
 # include <stdlib.h>
-# include <unistd.h>
-# include <netinet/in.h>
-# include <arpa/inet.h>
-# include <sys/socket.h>
-# include <sys/types.h>
-# include <errno.h>
-# include <sys/socket.h>
-
+# include <time.h>
+#include <stdint.h>
 
 #ifndef STRUCT_FILESHAREINFOR
 #define STRUCT_FILESHAREINFOR
@@ -17,26 +10,30 @@ int idFile = 1;
 
 typedef struct fileShareInfor{
     int id;
-    char filePath[100];
-    char filename[50];
+    char filepath[100];
+    long size_file;
+    struct tm timeinfo;
     uint32_t ip;
     int port;
     struct fileShareInfor *next;
 }*FileShareInfor;
 #endif /* STRUCT_FILESHAREINFOR */
 
-FileShareInfor fileShareInit(char *filePath, char *filename, uint32_t ip, int port);
+FileShareInfor fileShareInit(char *filepath, struct tm timeinfo, long size_file, uint32_t ip, int port);
 FileShareInfor addFileInfor(FileShareInfor head, FileShareInfor newFileInfor);
+FileShareInfor delHead(FileShareInfor head);
+FileShareInfor delTail(FileShareInfor head);
 FileShareInfor dellFileInfor(FileShareInfor head, int id);
 
 
-FileShareInfor fileShareInit(char *filePath, char *filename, uint32_t ip, int port){
+FileShareInfor fileShareInit(char *filepath, struct tm timeinfo, long size_file, uint32_t ip, int port){
     FileShareInfor fsInfor;
     fsInfor = (FileShareInfor)malloc(sizeof(struct fileShareInfor));
     fsInfor->id = idFile;
     idFile++;
-    strcpy(fsInfor->filePath, filePath);
-    strcpy(fsInfor->filename, filename);
+    strcpy(fsInfor->filepath, filepath);
+    fsInfor->timeinfo = timeinfo;
+    fsInfor->size_file = size_file;
     fsInfor->ip = ip;
     fsInfor->port = port;
     fsInfor->next = NULL;
@@ -59,7 +56,6 @@ FileShareInfor addFileInfor(FileShareInfor head, FileShareInfor newFileInfor){
 }
 
 FileShareInfor delHead(FileShareInfor head){
-    printf("delhead\n");
     if(head==NULL){
         return head;
     }

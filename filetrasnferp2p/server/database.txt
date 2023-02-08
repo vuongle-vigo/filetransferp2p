@@ -1,0 +1,6 @@
+1 /home/vigo/filetransferp2p/ProjectC/client/anh.jpeg 12341243 Wed Feb  8 14:12:41 2023 16777343 9090
+2 /home/vigo/filetransferp2p/ProjectC/client/anh.jpeg 12341243 Wed Feb  8 14:12:41 2023 16777343 9090
+3 /home/vigo/filetransferp2p/ProjectC/client/anh.jpeg 12341243 Wed Feb  8 14:12:41 2023 16777343 9090
+4 /home/vigo/filetransferp2p/ProjectC/client/anh.jpeg 12341243 Wed Feb  8 14:12:41 2023 16777343 9090
+5 /home/vigo/filetransferp2p/ProjectC/client/anh.jpeg 12341244 Wed Feb  8 14:12:41 2023 16777344 9090
+6 /home/vigo/filetransferp2p/ProjectC/client/anh.jpeg 12341243 Wed Feb  8 14:12:41 2023 16777343 9090

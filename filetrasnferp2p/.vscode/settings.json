@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "fileshareinfor.h": "c",
+        "string.h": "c",
+        "time.h": "c",
+        "stdint.h": "c",
+        "commandhanlder.h": "c",
+        "responsehanlder.h": "c",
+        "codehanlder.h": "c"
+    }
+}
