@@ -47,7 +47,6 @@ FileShareInfor fileShareInit(int id, char *filepath, struct tm timeinfo, long si
 }
 
 FileShareInfor addFileInfor(FileShareInfor head, FileShareInfor newFileInfor){
-    printf("add: %s\n", newFileInfor->filepath);
     FileShareInfor temp;
     if(head == NULL){
         head = newFileInfor;

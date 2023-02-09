@@ -69,7 +69,7 @@ int main(){
     for(int i = 1; i < MAX_CONNECTIONS; i++){
         fds[i].events = POLLRDHUP | POLLIN;
     }
-    int codeRequest = 0;
+    int codeRequest[MAX_CONNECTIONS] = {0};
     while(1){
         int ret = -1;
         ret = poll(fds, g_count, TIMEOUT*1000);
@@ -95,9 +95,9 @@ int main(){
             }
             else if(fds[i].revents & POLLIN){ //duyệt xem có dữ liệu có thể đọc được đến từ client không
                 //gọi request hanlder để xử lý dữ liệu được gửi đến
-                codeRequest = requestHandler(codeRequest, fds[i].fd, &fsInfor, clientList[fds[i].fd]);
+                codeRequest[fds[i].fd] = requestHandler(codeRequest[fds[i].fd], fds[i].fd, &fsInfor, clientList[fds[i].fd]);
                 printf("codeRequest:%d\n", codeRequest);
             }
-        }
+        } 
     }
 }
