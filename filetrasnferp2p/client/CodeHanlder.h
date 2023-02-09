@@ -1,24 +1,28 @@
 extern int recvDataStruct();
+char* uploadfile1  = "/uploadfile";
 enum RequestCode { //size of request : 4 bytes : int
     NONE_REQUEST_ = 0,
     ALLFILE_REQUEST_ = 1,
     OWN_FILE_REQUEST_ = 2,
     DEL_FILE_REQUEST_ = 3,
-    UPDATE_FILE_REQUEST_ = 4,
+    UPLOAD_FILE_REQUEST_ = 4,
     DOWNLOAD_FILE_REQUEST_ = 5,
     EXIT_REQUEST_ = 6
 };
-int resposeHanlder(int fd, int code, FileShareInfor temp){
+enum ResponseCode{
+    SUCCESS_RESPONSE_ = 21,
+    FAIL_RESPONSE_ = 22,
+    ERROR_RESPONSE_ = 23
+};
+// xu ly resopnse code tu server
+int resposeHanlder(int fd, int code, FileShareInfor temp, int port_share, char *cmd){
     int new_code = NONE_REQUEST_;
-    // if(code == NONE_REQUEST_){
-    //     int recv = recvDataStruct(fd, &new_code, sizeof(int));
-    //     printf("new_code = %d\n", new_code);
-    // }
     if(code == ALLFILE_REQUEST_){
         int recvC = recvDataStruct(fd, temp, sizeof(struct fileShareInfor));
         if(recvC!= sizeof(struct fileShareInfor)){
             int* code = temp;
             new_code = *code;
+            printf("new_code from client: %d\n", new_code);
         }
         else{
             char *time = asctime(&temp->timeinfo);
@@ -53,6 +57,8 @@ int resposeHanlder(int fd, int code, FileShareInfor temp){
             char *time = asctime(&temp->timeinfo);
             time[strlen(time) - 1] = '\0';
             printf("%d %s %ld %s %u %d\n", temp->id, temp->filepath, temp->size_file, time, temp->ip, temp->port);
+            char tmpfilepath[100] = {0};
+            strcpy(tmpfilepath, temp->filepath);
             char *p = strtok(temp->filepath, "/");
             char filename[50];
             while(p!=NULL){
@@ -60,7 +66,7 @@ int resposeHanlder(int fd, int code, FileShareInfor temp){
                 if(p!=NULL){strcpy(filename, p);}
             }
             printf("filename: %s\n", filename);
-            FILE *f = fopen("test.jpeg", "wb");
+            FILE *f = fopen(filename, "wb");
             if(!f){
                 perror("Couldn't create file to download");
             }
@@ -68,7 +74,7 @@ int resposeHanlder(int fd, int code, FileShareInfor temp){
                 struct sockaddr_in download_addr;
                 download_addr.sin_family = AF_INET;
                 download_addr.sin_addr.s_addr = temp->ip;
-                download_addr.sin_port = temp->port;
+                download_addr.sin_port = htons(temp->port);
                 int sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
                 printf("Start connection to download server\n");
                 int cfd = connect(sockfd, (struct sockaddr *)&download_addr, sizeof(download_addr));
@@ -77,8 +83,10 @@ int resposeHanlder(int fd, int code, FileShareInfor temp){
                     fclose(f);
                     return code;
                 }
+                int sent = sendData(sockfd, tmpfilepath, strlen(tmpfilepath));
+
                 struct pollfd fds;
-                fds.events = POLLRDHUP | POLLIN;
+                fds.events = POLLIN | POLLRDHUP;
                 fds.fd = sockfd;
                 int count_size = 0;
                 while(1){
@@ -93,23 +101,55 @@ int resposeHanlder(int fd, int code, FileShareInfor temp){
                     }
                     if(fds.revents & POLLIN){
                         char ch;
-                        int recvC = recv(fd, &ch, 1, 0);
-                        printf("received");
+                        int recvC = recv(sockfd, &ch, 1, 0);
                         count_size += recvC;
                         fputc(ch, f);
                     }
-                    else if(fds.revents & POLLRDHUP){
-                        // printf("Download complete: %s\n", filename);
+                    else if(fds.revents & POLLRDHUP){      
+                        printf("Close connect from download: %s\n", filename);
                         break;
                     }
                 }
                 if(count_size == temp->size_file){
-                    printf("Download complete: %s\n", filename);
+                    printf("Download complete: %s : %d\n", filename, count_size);
                 }
                 fclose(f);
             }
             return code;
         }
+    }
+    else if(code == UPLOAD_FILE_REQUEST_){
+        printf("start update file\n");
+        char tmp[100];
+        recv(fd, tmp, sizeof(tmp), 0);
+        FileShareInfor fsInforUpdate = (FileShareInfor)malloc(sizeof(struct fileShareInfor));
+        char filepath[PATH_MAX];
+        char *filename = cmd + strlen(uploadfile1) + 1;\
+        char *res = realpath(filename, filepath);
+        printf("send file: %s\n", filepath);
+        if(res == NULL){
+            printf("realpath failed\n");
+            return NONE_REQUEST_;
+        }
+        else{
+            strcpy(fsInforUpdate->filepath, filepath);
+            struct stat st;
+            stat(filepath, &st);
+            fsInforUpdate->size_file = st.st_size;
+            fsInforUpdate->port = port_share;
+
+            int sent = sendDataStruct(fd, fsInforUpdate, sizeof(struct fileShareInfor));
+            sleep(2);
+            int code;
+            recvDataStruct(fd, &code, sizeof(int));
+            if(code == SUCCESS_RESPONSE_){
+                printf("update file success\n");
+            }  
+            if(code == FAIL_RESPONSE_){
+                printf("update file failed\n");
+            }
+        } 
+        new_code = NONE_REQUEST_;
     }
     return new_code;
 }

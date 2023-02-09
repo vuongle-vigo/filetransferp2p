@@ -6,6 +6,8 @@
         "stdint.h": "c",
         "commandhanlder.h": "c",
         "responsehanlder.h": "c",
-        "codehanlder.h": "c"
+        "codehanlder.h": "c",
+        "stdlib.h": "c",
+        "stat.h": "c"
     }
 }

@@ -27,7 +27,7 @@ FileShareInfor readDataBase(FileShareInfor fsInfor){
             strcat(ttemp, " ");
         }
         strptime(ttemp, "%a %b %d %H:%M:%S %Y", &time);
-        tmp = fileShareInit(filepath, time, size_file, ip, port);
+        tmp = fileShareInit(id, filepath, time, size_file, ip, port);
         fsInfor = addFileInfor(fsInfor, tmp);
     }
     fclose(fp);
@@ -40,7 +40,7 @@ int writeDataBase(FileShareInfor fsInfor){
     FILE *fp = fopen(filename, "w");
     if(!fp){
         perror("Couldn't open database file to write\n");
-        return 1;
+        return 0;
     }
     temp = fsInfor;
     while(temp!=NULL){

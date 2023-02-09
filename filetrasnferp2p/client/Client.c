@@ -24,6 +24,7 @@
 
 # define HOST_NAME "127.0.0.1"
 # define BUFFER_SIZE 1024
+// char filepathupload[BUFFER_SIZE];
 int main(int argc, char *argv[]){
     if(argc < 4){
         printf("Usage: %s <host> <port> <port_sharefile>\n", argv[0]);
@@ -41,6 +42,10 @@ int main(int argc, char *argv[]){
         perror("bind client listen error");
         exit(0);
     }
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) == -1) {
+        perror("setsockopt() error...\n");
+        exit(1);
+    } 
     listen(sockfd_sharefile, 1);
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(atoi(argv[2]));
@@ -54,10 +59,11 @@ int main(int argc, char *argv[]){
     fds[0].fd = 0;    //stdin
     fds[0].events = POLLIN; // check if have any data from stdin
     fds[1].fd = sockfd; //fd connect to server
-    fds[1].events = POLLIN; // check if have any data from server
+    fds[1].events = POLLIN | POLLPRI; // check if have any data from server
     fds[2].fd = sockfd_sharefile; // fd wait connect from client want download file
     fds[2].events = POLLIN | POLLPRI; // check if have any data from client
     int codeResponse = NONE_REQUEST_;
+    char cmd[1024];
     FileShareInfor temp = (FileShareInfor)malloc(sizeof(struct fileShareInfor));
     while(1){
         int ret = poll(fds, 4, TIMEOUT*1000);
@@ -72,13 +78,14 @@ int main(int argc, char *argv[]){
         if(fds[0].revents & POLLIN){//stdin 
             char buf[BUFFER_SIZE];
             gets(buf);
+            strcpy(cmd, buf);
             //command hanlder
             codeResponse = commandHanlder(buf ,fds[1].fd);
         }
-        if(fds[1].revents & POLLIN){//server data
+        if(fds[1].revents & (POLLIN)){//server data
             char buf[BUFFER_SIZE];
-            codeResponse = resposeHanlder(fds[1].fd, codeResponse, temp);
-            printf("response: %d\n", codeResponse);
+            codeResponse = resposeHanlder(fds[1].fd, codeResponse, temp, atoi(argv[3]), cmd);
+            // printf("response: %d\n", codeResponse);
         }
         if(fds[2].revents & POLLIN){//client data
             struct sockaddr_in client_download_addr;
@@ -91,7 +98,7 @@ int main(int argc, char *argv[]){
         if(fds[3].fd != 0 && (fds[3].revents & POLLIN)){
             char buf[BUFFER_SIZE] = {0};
             int recv = recvData(fds[3].fd, buf, BUFFER_SIZE);
-            char *filepath = realpath(buf, NULL);
+            char *filepath = buf;
             FILE *fp = fopen(filepath, "rb");
             if(!fp){
                 perror("open file to send");
@@ -100,7 +107,7 @@ int main(int argc, char *argv[]){
             char ch;
             int count = 0;
             while (!feof(fp))
-            {
+            {   
                 ch = fgetc(fp);
                 int sent = send(fds[3].fd, &ch, 1, 0);
                 count += sent;

@@ -19,18 +19,24 @@ typedef struct fileShareInfor{
 }*FileShareInfor;
 #endif /* STRUCT_FILESHAREINFOR */
 
-FileShareInfor fileShareInit(char *filepath, struct tm timeinfo, long size_file, uint32_t ip, int port);
+FileShareInfor fileShareInit(int id, char *filepath, struct tm timeinfo, long size_file, uint32_t ip, int port);
 FileShareInfor addFileInfor(FileShareInfor head, FileShareInfor newFileInfor);
 FileShareInfor delHead(FileShareInfor head);
 FileShareInfor delTail(FileShareInfor head);
 FileShareInfor dellFileInfor(FileShareInfor head, int id);
 
 
-FileShareInfor fileShareInit(char *filepath, struct tm timeinfo, long size_file, uint32_t ip, int port){
+FileShareInfor fileShareInit(int id, char *filepath, struct tm timeinfo, long size_file, uint32_t ip, int port){
     FileShareInfor fsInfor;
     fsInfor = (FileShareInfor)malloc(sizeof(struct fileShareInfor));
-    fsInfor->id = idFile;
-    idFile++;
+    if(id!=-1){
+        fsInfor->id = id;
+        idFile = ++id;
+    }
+    else{
+        fsInfor->id = idFile;
+        idFile++;
+    }
     strcpy(fsInfor->filepath, filepath);
     fsInfor->timeinfo = timeinfo;
     fsInfor->size_file = size_file;
@@ -41,6 +47,7 @@ FileShareInfor fileShareInit(char *filepath, struct tm timeinfo, long size_file,
 }
 
 FileShareInfor addFileInfor(FileShareInfor head, FileShareInfor newFileInfor){
+    printf("add: %s\n", newFileInfor->filepath);
     FileShareInfor temp;
     if(head == NULL){
         head = newFileInfor;
