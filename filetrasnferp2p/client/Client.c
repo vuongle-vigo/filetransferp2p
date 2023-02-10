@@ -1,4 +1,4 @@
-#define _GNU_SOURCE
+                                                                                                                                                                        #define _GNU_SOURCE
 #define TIMEOUT 50  /*timeout 5 giây*/
 
 # include <stdio.h>
@@ -76,8 +76,11 @@ int main(int argc, char *argv[]){
             return 0;
         }
         if(fds[0].revents & POLLIN){//stdin 
-            char buf[BUFFER_SIZE];
-            gets(buf);
+            char *buf = (char *)malloc(BUFFER_SIZE * sizeof(char));
+            size_t bufsize = BUFFER_SIZE;
+            size_t characters;
+            characters = getline(&buf, &bufsize, stdin);
+            buf[strlen(buf) - 1] = '\0';
             strcpy(cmd, buf);
             //command hanlder
             codeResponse = commandHanlder(buf ,fds[1].fd);
@@ -85,7 +88,7 @@ int main(int argc, char *argv[]){
         if(fds[1].revents & (POLLIN)){//server data
             char buf[BUFFER_SIZE];
             codeResponse = resposeHanlder(fds[1].fd, codeResponse, temp, atoi(argv[3]), cmd);
-            // printf("response: %d\n", codeResponse);
+            printf("%s\n", getResponseName(codeResponse));
         }
         if(fds[2].revents & POLLIN){//client data
             struct sockaddr_in client_download_addr;
@@ -99,6 +102,9 @@ int main(int argc, char *argv[]){
             char buf[BUFFER_SIZE] = {0};
             int recv = recvData(fds[3].fd, buf, BUFFER_SIZE);
             char *filepath = buf;
+            char tmp[100];
+            strcpy(tmp, filepath);
+            
             FILE *fp = fopen(filepath, "rb");
             if(!fp){
                 perror("open file to send");
@@ -117,4 +123,55 @@ int main(int argc, char *argv[]){
             fds[3].fd = 0;
         }
     }
+}
+
+
+int create_file_to_download(char *filename){
+    FILE *fp;
+    char new_filename[100];
+    int i = 1;
+    fp = fopen(filename, "r");
+    if (fp != NULL)
+    {   
+        fclose(fp);
+        char tmp[100];
+        strcpy(tmp, filename);
+        char *p = strstr(tmp, "."); // luu duoi file vao p : (.jpeg)
+        char *p2 = strtok(tmp, "."); //tenfile khong chua duoi
+        char countstr[10];
+        sprintf(countstr, "%d", i);
+        strcat(p2, countstr);
+        strcat(p2, p);
+        while ((fp = fopen(new_filename, "r")) != NULL)
+        {   
+            fclose(fp);
+            i++;
+            strcpy(tmp, filename);
+            char *p = strstr(tmp, "."); // luu duoi file vao p : (.jpeg)
+            char *p2 = strtok(tmp, "."); //tenfile khong chua duoi
+            char countstr[10];
+            sprintf(countstr, "%d", i);
+            strcat(p2, countstr);
+            strcat(p2, p);
+        }
+        fp = fopen(new_filename, "w");
+        if (fp == NULL)
+        {
+            printf("Không thể tạo tập tin %s\n", new_filename);
+            return -1;
+        }
+        printf("Đã tạo tập tin %s\n", new_filename);
+    }
+    else
+    {
+        // Tạo tập tin gốc
+        fp = fopen(filename, "w");
+        if (fp == NULL)
+        {
+            printf("Không thể tạo tập tin %s\n", filename);
+            return 1;
+        }
+        printf("Đã tạo tập tin %s\n", filename);
+    }
+    return fp;
 }

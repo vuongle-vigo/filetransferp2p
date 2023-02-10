@@ -3,4 +3,5 @@
 3 /home/vigo/Desktop/filetransferp2p/filetrasnferp2p/client/test.jpeg 526491 Thu Feb  9 19:06:27 2023 16777343 9090
 4 /home/vigo/Desktop/filetransferp2p/filetrasnferp2p/client/test.jpeg 526491 Thu Feb  9 19:19:03 2023 16777343 9092
 5 /home/vigo/Desktop/filetransferp2p/filetrasnferp2p/client/test.jpeg 526491 Thu Feb  9 19:19:39 2023 16777343 9092
-6 /home/vigo/Desktop/filetransferp2p/filetrasnferp2p/client/Client 22200 Thu Feb  9 19:19:55 2023 16777343 9092
+6 /home/vigo/Desktop/filetransferp2p/filetrasnferp2p/client/Client 22200 Thu Feb  9 19:54:55 2023 16777544 9092
+7 /home/vigo/Desktop/filetransferp2p/filetrasnferp2p/client/Client 22200 Thu Feb  9 19:19:55 2023 16777343 9092

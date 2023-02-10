@@ -4,7 +4,7 @@ const char* getownfiles = "/getownfiles";
 const char* deletefile  = "/deletefile";
 const char* downloadfile = "/downloadfile";
 const char* uploadfile  = "/uploadfile";
-
+const char* quit = "/quit";
 int commandHanlder(char *command, int fd){
     if(strcmp(command, getallfiles) == 0){
         int code = ALLFILE_REQUEST_;
@@ -40,6 +40,10 @@ int commandHanlder(char *command, int fd){
         int sent = sendDataStruct(fd, &code, sizeof(code));
         sleep(1);
         return UPLOAD_FILE_REQUEST_;
+    }
+    else if(strcmp(command, quit)==0){
+        printf("Exiting...\n");
+        exit(0);
     }
     return NONE_REQUEST_;
 }

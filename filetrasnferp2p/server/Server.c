@@ -28,13 +28,14 @@
 
 int g_count = 1;
 
-int deleteConnect(int fd, struct pollfd fds[]){
+int deleteConnect(int fd, struct pollfd fds[], struct sockaddr_in caList[]){
     for(int i = 1; i < g_count; i++){
         if(fds[i].fd == fd){
             fds[i].revents = 0;
             for(int j = i;j<g_count-1;j++){
                 fds[j] = fds[j+1];
             }
+            memset(&caList[fds[i].fd], 0, sizeof(struct sockaddr_in));
             g_count--;
             break;
         }
@@ -63,7 +64,7 @@ int main(){
         exit(1);
     }
     listen(sockfd, 10);
-    struct pollfd fds[MAX_CONNECTIONS];
+    struct pollfd fds[MAX_CONNECTIONS] = {0};
     fds[0].fd = sockfd;               //fds[0] để nắm bắt thông tin ở sockfd, fd của client được lưu từ fds[1] trở đi
     fds[0].events = POLLIN | POLLPRI;
     for(int i = 1; i < MAX_CONNECTIONS; i++){
@@ -77,7 +78,7 @@ int main(){
             perror("poll() error...\n");
             exit(1);
         }
-        if(ret == 0){
+        if(ret == 0){  
             printf("Connection timeout: %d\n", TIMEOUT);
             return 0;
         }
@@ -91,12 +92,12 @@ int main(){
         for(int i = 1; i < g_count; i++){
             if(fds[i].revents & POLLRDHUP){ //duyệt xem có kết nối từ client đóng không, nếu có thì xóa khỏi fds
                 printf("disconnect:%d\n", fds[i].fd);
-                deleteConnect(fds[i].fd, fds);
+                deleteConnect(fds[i].fd, fds, clientList);
             }
             else if(fds[i].revents & POLLIN){ //duyệt xem có dữ liệu có thể đọc được đến từ client không
                 //gọi request hanlder để xử lý dữ liệu được gửi đến
-                codeRequest[fds[i].fd] = requestHandler(codeRequest[fds[i].fd], fds[i].fd, &fsInfor, clientList[fds[i].fd]);
-                printf("codeRequest:%d\n", codeRequest);
+                codeRequest[fds[i].fd] = requestHandler(codeRequest[fds[i].fd], fds[i].fd, &fsInfor, clientList, fds);
+                printf("Set code: %s\n", getRequestName(codeRequest[fds[i].fd]));
             }
         } 
     }

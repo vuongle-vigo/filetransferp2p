@@ -15,35 +15,42 @@ enum ResponseCode{
     ERROR_RESPONSE_ = 23
 };
 
-int requestHandler(int code, int fd, FileShareInfor *fsInfor, struct sockaddr_in ca){
+const char* getRequestName(enum RequestCode requestcode);
+int checkOnlineClient(uint32_t ip, struct sockaddr_in caList[], struct pollfd fds[]);
+int requestHandler(int code, int fd, FileShareInfor *fsInfor, struct sockaddr_in caList[], struct pollfd fds[]);
+
+
+int requestHandler(int code, int fd, FileShareInfor *fsInfor, struct sockaddr_in caList[], struct pollfd fds[]){
     if(code == NONE_REQUEST_){
         int new_code;
         recvDataStruct(fd, &new_code, sizeof(int));
-        printf("new_code = %d\n", new_code);
-        return requestHandler(new_code, fd, fsInfor, ca);
+        printf("New response: %s\n", getRequestName(new_code));
+        code = requestHandler(new_code, fd, fsInfor, caList, fds);
     }
     else{
         if(code == ALLFILE_REQUEST_){
             FileShareInfor tmp = *fsInfor;
             while(tmp != NULL){
-                sendDataStruct(fd, tmp, sizeof(struct fileShareInfor));
-                sleep(0.1);
+                if(checkOnlineClient(tmp->ip, caList, fds)){
+                    sendDataStruct(fd, tmp, sizeof(struct fileShareInfor));
+                    sleep(0.1);
+                }
                 tmp = tmp->next;
             }
-            int codeResponse = NONE_REQUEST_;
+            int codeResponse = SUCCESS_RESPONSE_;
             sendDataStruct(fd, &codeResponse, sizeof(int));
             code = NONE_REQUEST_;
         }
         else if(code == OWN_FILE_REQUEST_){
             FileShareInfor tmp = *fsInfor;
             while(tmp!= NULL){
-                if(tmp->ip == ca.sin_addr.s_addr){
+                if(tmp->ip == caList[fd].sin_addr.s_addr){
                     sendDataStruct(fd, tmp, sizeof(struct fileShareInfor));
                     sleep(0.1);
                 }
                 tmp = tmp->next;
             }
-            int codeResponse = NONE_REQUEST_;
+            int codeResponse = SUCCESS_RESPONSE_;
             sendDataStruct(fd, &codeResponse, sizeof(int));
             code = NONE_REQUEST_;
         }
@@ -51,8 +58,13 @@ int requestHandler(int code, int fd, FileShareInfor *fsInfor, struct sockaddr_in
             int idFile;
             int recv = recvDataStruct(fd, &idFile, sizeof(int));
             *fsInfor = dellFileInfor(*fsInfor, idFile);
-            writeDataBase(*fsInfor);
-            int codeResponse = NONE_REQUEST_;
+            int codeResponse;
+            if(writeDataBase(*fsInfor)){
+                codeResponse = SUCCESS_RESPONSE_;
+            }
+            else{
+                codeResponse = FAIL_RESPONSE_;
+            }
             sleep(1);
             sendDataStruct(fd, &codeResponse, sizeof(int));
             code = NONE_REQUEST_;
@@ -69,7 +81,7 @@ int requestHandler(int code, int fd, FileShareInfor *fsInfor, struct sockaddr_in
             }
             sleep(1);
             sendDataStruct(fd, tmp, sizeof(struct fileShareInfor));
-            int codeResponse = NONE_REQUEST_;
+            // int codeResponse = NONE_REQUEST_;
             // sendDataStruct(fd, &codeResponse, sizeof(int));
             code = NONE_REQUEST_;
         }
@@ -83,7 +95,7 @@ int requestHandler(int code, int fd, FileShareInfor *fsInfor, struct sockaddr_in
             time(&rawtime);
             timeinfo = localtime ( &rawtime );
             tmp->timeinfo = *timeinfo;
-            FileShareInfor fileupdate = fileShareInit(-1, tmp->filepath, tmp->timeinfo, tmp->size_file, ca.sin_addr.s_addr, tmp->port);
+            FileShareInfor fileupdate = fileShareInit(-1, tmp->filepath, tmp->timeinfo, tmp->size_file, caList[fd].sin_addr.s_addr, tmp->port);
             printf("filename = %s\n", fileupdate->filepath);
             addFileInfor(*fsInfor, fileupdate);
             int codeResponse;
@@ -101,3 +113,30 @@ int requestHandler(int code, int fd, FileShareInfor *fsInfor, struct sockaddr_in
     }
     return code;
 }
+
+
+int checkOnlineClient(uint32_t ip, struct sockaddr_in caList[], struct pollfd fds[]){
+    int i = 1;
+    while(fds[i].fd != 0){
+        if(caList[fds[i].fd].sin_addr.s_addr == ip){
+            return 1;
+        }
+        i++;
+    }
+    return 0;
+}
+
+const char* getRequestName(enum RequestCode requestcode) 
+{
+   switch (requestcode) 
+   {
+      case NONE_REQUEST_: return "NONE_REQUEST_";
+      case ALLFILE_REQUEST_: return "ALLFILE_REQUEST_";
+      case OWN_FILE_REQUEST_: return "OWN_FILE_REQUEST_";
+      case DEL_FILE_REQUEST_: return "DEL_FILE_REQUEST_";
+      case DOWNLOAD_FILE_REQUEST_: return "DOWNLOAD_FILE_REQUEST_";
+      case UPLOAD_FILE_REQUEST_: return "UPLOAD_FILE_REQUEST_";
+      default: return "UNKNOWN_REQUEST_";
+   }
+}
+

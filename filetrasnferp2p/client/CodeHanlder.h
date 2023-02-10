@@ -1,4 +1,4 @@
-extern int recvDataStruct();
+                                                                                                                                                                                                                                                                                                        extern int recvDataStruct();
 char* uploadfile1  = "/uploadfile";
 enum RequestCode { //size of request : 4 bytes : int
     NONE_REQUEST_ = 0,
@@ -15,32 +15,36 @@ enum ResponseCode{
     ERROR_RESPONSE_ = 23
 };
 // xu ly resopnse code tu server
+
+const char* getRequestName(enum RequestCode requestcode);
+const char* getResponseName(enum ResponseCode requestcode);
+int resposeHanlder(int fd, int code, FileShareInfor temp, int port_share, char *cmd);
+
 int resposeHanlder(int fd, int code, FileShareInfor temp, int port_share, char *cmd){
     int new_code = NONE_REQUEST_;
     if(code == ALLFILE_REQUEST_){
         int recvC = recvDataStruct(fd, temp, sizeof(struct fileShareInfor));
         if(recvC!= sizeof(struct fileShareInfor)){
-            int* code = temp;
+            int* code = (int*)temp;                                                                                                                       
             new_code = *code;
-            printf("new_code from client: %d\n", new_code);
         }
         else{
             char *time = asctime(&temp->timeinfo);
             time[strlen(time) - 1] = '\0';
-            printf("%d %s %ld %s %u %d\n", temp->id, temp->filepath, temp->size_file, time , temp->ip, temp->port);
+            printf("%d %s %ld %s %u %d", temp->id, temp->filepath, temp->size_file, time , temp->ip, temp->port);
             return code;
         }
     }
     else if(code == OWN_FILE_REQUEST_){
         int recvC = recvDataStruct(fd, temp, sizeof(struct fileShareInfor));
         if(recvC!= sizeof(struct fileShareInfor)){
-            int* code = temp;
+            int* code = (int*)temp;
             new_code = *code;
         }
         else{
             char *time = asctime(&temp->timeinfo);
             time[strlen(time) - 1] = '\0';
-            printf("%d %s %ld %s %u %d\n", temp->id, temp->filepath, temp->size_file, time, temp->ip, temp->port);
+            printf("%d %s %ld %s %u %d", temp->id, temp->filepath, temp->size_file, time, temp->ip, temp->port);
             return code;
         }
     }
@@ -50,7 +54,7 @@ int resposeHanlder(int fd, int code, FileShareInfor temp, int port_share, char *
     else if(code == DOWNLOAD_FILE_REQUEST_){
         int recvC = recvDataStruct(fd, temp, sizeof(struct fileShareInfor));
         if(recvC!= sizeof(struct fileShareInfor)){
-            int* code = temp;
+            int* code = (int*)temp;
             new_code = *code;
         }
         else{
@@ -152,4 +156,27 @@ int resposeHanlder(int fd, int code, FileShareInfor temp, int port_share, char *
         new_code = NONE_REQUEST_;
     }
     return new_code;
+}
+
+const char* getRequestName(enum RequestCode requestcode) 
+{
+   switch (requestcode) 
+   {
+      case NONE_REQUEST_: return "NONE_REQUEST_";
+      case ALLFILE_REQUEST_: return "ALLFILE_REQUEST_";
+      case OWN_FILE_REQUEST_: return "OWN_FILE_REQUEST_";
+      case DEL_FILE_REQUEST_: return "DEL_FILE_REQUEST_";
+      case DOWNLOAD_FILE_REQUEST_: return "DOWNLOAD_FILE_REQUEST_";
+      case UPLOAD_FILE_REQUEST_: return "UPLOAD_FILE_REQUEST_";
+   }
+}
+
+const char* getResponseName(enum ResponseCode responsecode){
+    switch (responsecode) 
+    {
+        case SUCCESS_RESPONSE_: return "SUCCESS_RESPONSE_";
+        case FAIL_RESPONSE_: return "FAIL_RESPONSE_";
+        case ERROR_RESPONSE_: return "ERROR_RESPONSE_";
+        default: return "";
+    }
 }
