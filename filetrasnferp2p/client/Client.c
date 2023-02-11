@@ -1,5 +1,5 @@
                                                                                                                                                                         #define _GNU_SOURCE
-#define TIMEOUT 50  /*timeout 5 giây*/
+#define TIMEOUT 500  /*timeout 5 giây*/
 
 # include <stdio.h>
 # include <string.h>

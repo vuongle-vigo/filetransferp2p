@@ -70,7 +70,7 @@ int resposeHanlder(int fd, int code, FileShareInfor temp, int port_share, char *
                 if(p!=NULL){strcpy(filename, p);}
             }
             printf("filename: %s\n", filename);
-            FILE *f = fopen(filename, "wb");
+            FILE *f = fopen("minhbui.jpeg", "wb");
             if(!f){
                 perror("Couldn't create file to download");
             }
@@ -128,7 +128,7 @@ int resposeHanlder(int fd, int code, FileShareInfor temp, int port_share, char *
         recv(fd, tmp, sizeof(tmp), 0);
         FileShareInfor fsInforUpdate = (FileShareInfor)malloc(sizeof(struct fileShareInfor));
         char filepath[PATH_MAX];
-        char *filename = cmd + strlen(uploadfile1) + 1;\
+        char *filename = cmd + strlen(uploadfile1) + 1;
         char *res = realpath(filename, filepath);
         printf("send file: %s\n", filepath);
         if(res == NULL){

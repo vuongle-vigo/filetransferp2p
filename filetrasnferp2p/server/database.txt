@@ -1,7 +1,8 @@
 1 /home/vigo/filetransferp2p/ProjectC/client/anh.jpeg 526491 Wed Feb  8 14:12:41 2023 16777343 9090
 2 /home/vigo/filetransferp2p/ProjectC/client/anh.jpeg 526491 Wed Feb  8 14:12:41 2023 16777343 9090
-3 /home/vigo/Desktop/filetransferp2p/filetrasnferp2p/client/test.jpeg 526491 Thu Feb  9 19:06:27 2023 16777343 9090
 4 /home/vigo/Desktop/filetransferp2p/filetrasnferp2p/client/test.jpeg 526491 Thu Feb  9 19:19:03 2023 16777343 9092
 5 /home/vigo/Desktop/filetransferp2p/filetrasnferp2p/client/test.jpeg 526491 Thu Feb  9 19:19:39 2023 16777343 9092
 6 /home/vigo/Desktop/filetransferp2p/filetrasnferp2p/client/Client 22200 Thu Feb  9 19:54:55 2023 16777544 9092
 7 /home/vigo/Desktop/filetransferp2p/filetrasnferp2p/client/Client 22200 Thu Feb  9 19:19:55 2023 16777343 9092
+8 /home/vigo/Desktop/filetransferp2p/filetrasnferp2p/client/test.jpeg 1 Sat Feb 11 19:30:01 2023 16777343 9090
+9 /home/vigo/Desktop/filetransferp2p/filetrasnferp2p/client/anh.jpeg 526490 Sat Feb 11 19:33:03 2023 16777343 9090
