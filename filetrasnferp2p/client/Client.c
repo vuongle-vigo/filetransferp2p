@@ -38,14 +38,14 @@ int main(int argc, char *argv[]){
     clientListen_addr.sin_family = AF_INET;
     clientListen_addr.sin_addr.s_addr = inet_addr(HOST_NAME);
     clientListen_addr.sin_port = htons(atoi(argv[3]));
+    if (setsockopt(sockfd_sharefile, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) == -1) {
+        perror("setsockopt() error...\n");
+        exit(1);
+    } 
     if(bind(sockfd_sharefile, (struct sockaddr *)&clientListen_addr, sizeof(clientListen_addr)) < 0){
         perror("bind client listen error");
         exit(0);
     }
-    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) == -1) {
-        perror("setsockopt() error...\n");
-        exit(1);
-    } 
     listen(sockfd_sharefile, 1);
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(atoi(argv[2]));
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]){
     fds[0].fd = 0;    //stdin
     fds[0].events = POLLIN; // check if have any data from stdin
     fds[1].fd = sockfd; //fd connect to server
-    fds[1].events = POLLIN | POLLPRI; // check if have any data from server
+    fds[1].events = POLLIN | POLLPRI | POLLRDHUP; // check if have any data from server
     fds[2].fd = sockfd_sharefile; // fd wait connect from client want download file
     fds[2].events = POLLIN | POLLPRI; // check if have any data from client
     int codeResponse = NONE_REQUEST_;
@@ -90,6 +90,10 @@ int main(int argc, char *argv[]){
             codeResponse = resposeHanlder(fds[1].fd, codeResponse, temp, atoi(argv[3]), cmd);
             printf("%s\n", getResponseName(codeResponse));
         }
+        if(fds[1].revents & POLLRDHUP){
+            printf("Disconnect from server\n");
+            exit(0);
+        }
         if(fds[2].revents & POLLIN){//client data
             struct sockaddr_in client_download_addr;
             printf("incoming connect\n");
@@ -104,7 +108,7 @@ int main(int argc, char *argv[]){
             char *filepath = buf;
             char tmp[100];
             strcpy(tmp, filepath);
-            
+            printf("tmp: %s\n", tmp);
             FILE *fp = fopen(filepath, "rb");
             if(!fp){
                 perror("open file to send");
@@ -120,58 +124,10 @@ int main(int argc, char *argv[]){
             }
             printf("send file: %d\n", count);
             fclose(fp);
+            close(fds[3].fd);
             fds[3].fd = 0;
         }
     }
 }
 
 
-int create_file_to_download(char *filename){
-    FILE *fp;
-    char new_filename[100];
-    int i = 1;
-    fp = fopen(filename, "r");
-    if (fp != NULL)
-    {   
-        fclose(fp);
-        char tmp[100];
-        strcpy(tmp, filename);
-        char *p = strstr(tmp, "."); // luu duoi file vao p : (.jpeg)
-        char *p2 = strtok(tmp, "."); //tenfile khong chua duoi
-        char countstr[10];
-        sprintf(countstr, "%d", i);
-        strcat(p2, countstr);
-        strcat(p2, p);
-        while ((fp = fopen(new_filename, "r")) != NULL)
-        {   
-            fclose(fp);
-            i++;
-            strcpy(tmp, filename);
-            char *p = strstr(tmp, "."); // luu duoi file vao p : (.jpeg)
-            char *p2 = strtok(tmp, "."); //tenfile khong chua duoi
-            char countstr[10];
-            sprintf(countstr, "%d", i);
-            strcat(p2, countstr);
-            strcat(p2, p);
-        }
-        fp = fopen(new_filename, "w");
-        if (fp == NULL)
-        {
-            printf("Không thể tạo tập tin %s\n", new_filename);
-            return -1;
-        }
-        printf("Đã tạo tập tin %s\n", new_filename);
-    }
-    else
-    {
-        // Tạo tập tin gốc
-        fp = fopen(filename, "w");
-        if (fp == NULL)
-        {
-            printf("Không thể tạo tập tin %s\n", filename);
-            return 1;
-        }
-        printf("Đã tạo tập tin %s\n", filename);
-    }
-    return fp;
-}

@@ -1,4 +1,3 @@
-
 enum RequestCode { //size of request : 4 bytes : int
     NONE_REQUEST_ = 0,
     ALLFILE_REQUEST_ = 1,
@@ -57,16 +56,31 @@ int requestHandler(int code, int fd, FileShareInfor *fsInfor, struct sockaddr_in
         else if(code == DEL_FILE_REQUEST_){
             int idFile;
             int recv = recvDataStruct(fd, &idFile, sizeof(int));
-            *fsInfor = dellFileInfor(*fsInfor, idFile);
-            int codeResponse;
-            if(writeDataBase(*fsInfor)){
-                codeResponse = SUCCESS_RESPONSE_;
+            FileShareInfor tmp = *fsInfor;
+            int checkOwner = 0;
+            while(tmp!=NULL){
+                if(tmp->id == idFile && tmp->ip == caList[fd].sin_addr.s_addr){
+                    checkOwner = 1;
+                    break;
+                }
+                tmp = tmp->next;
             }
-            else{
-                codeResponse = FAIL_RESPONSE_;
+            if(checkOwner == 1){
+                *fsInfor = dellFileInfor(*fsInfor, idFile);
+                int codeResponse;
+                if(writeDataBase(*fsInfor)){
+                    codeResponse = SUCCESS_RESPONSE_;
+                }
+                else{
+                    codeResponse = FAIL_RESPONSE_;
+                }
+                sleep(1);
+                sendDataStruct(fd, &codeResponse, sizeof(int));
+            }else{
+                int codeResponse = FAIL_RESPONSE_;
+                sleep(1);
+                sendDataStruct(fd, &codeResponse, sizeof(int));
             }
-            sleep(1);
-            sendDataStruct(fd, &codeResponse, sizeof(int));
             code = NONE_REQUEST_;
         }
         else if(code == DOWNLOAD_FILE_REQUEST_){
@@ -79,8 +93,15 @@ int requestHandler(int code, int fd, FileShareInfor *fsInfor, struct sockaddr_in
                 }
                 tmp = tmp->next;
             }
-            sleep(1);
-            sendDataStruct(fd, tmp, sizeof(struct fileShareInfor));
+            if(checkOnlineClient(tmp->ip, caList, fds)){
+                sleep(1);
+                sendDataStruct(fd, tmp, sizeof(struct fileShareInfor));
+            }
+            else{
+                sleep(1);
+                int codeResponse = ERROR_RESPONSE_;
+                sendDataStruct(fd, &codeResponse, sizeof(codeResponse)); 
+            }
             // int codeResponse = NONE_REQUEST_;
             // sendDataStruct(fd, &codeResponse, sizeof(int));
             code = NONE_REQUEST_;

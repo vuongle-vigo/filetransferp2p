@@ -5,3 +5,4 @@ client command:
 /deletefile + id
 /uploadfile + filepath
 /downloadfile + id
+/quit

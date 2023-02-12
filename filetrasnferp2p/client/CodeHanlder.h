@@ -14,10 +14,15 @@ enum ResponseCode{
     FAIL_RESPONSE_ = 22,
     ERROR_RESPONSE_ = 23
 };
+
+// enum ErrorCode {
+//     //
+// };
 // xu ly resopnse code tu server
 
 const char* getRequestName(enum RequestCode requestcode);
 const char* getResponseName(enum ResponseCode requestcode);
+int create_file_to_download(char *filename, char *new_filename);
 int resposeHanlder(int fd, int code, FileShareInfor temp, int port_share, char *cmd);
 
 int resposeHanlder(int fd, int code, FileShareInfor temp, int port_share, char *cmd){
@@ -69,26 +74,22 @@ int resposeHanlder(int fd, int code, FileShareInfor temp, int port_share, char *
                 p = strtok(NULL, "/");
                 if(p!=NULL){strcpy(filename, p);}
             }
-            printf("filename: %s\n", filename);
-            FILE *f = fopen("minhbui.jpeg", "wb");
-            if(!f){
-                perror("Couldn't create file to download");
-            }
-            else{
-                struct sockaddr_in download_addr;
-                download_addr.sin_family = AF_INET;
-                download_addr.sin_addr.s_addr = temp->ip;
-                download_addr.sin_port = htons(temp->port);
-                int sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-                printf("Start connection to download server\n");
-                int cfd = connect(sockfd, (struct sockaddr *)&download_addr, sizeof(download_addr));
-                if(cfd < 0){
-                    perror("connect to download");
-                    fclose(f);
-                    return code;
-                }
+            struct sockaddr_in download_addr;
+            download_addr.sin_family = AF_INET;
+            download_addr.sin_addr.s_addr = temp->ip;
+            download_addr.sin_port = htons(temp->port);
+            int sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+            printf("Start connection to download server\n");
+            int cfd = connect(sockfd, (struct sockaddr *)&download_addr, sizeof(download_addr));
+            if(cfd < 0){
+                perror("connect to download");
+                close(sockfd);
+                return code;
+            }else{
+                char newfilename[100];
+                create_file_to_download(filename, newfilename);
+                FILE *f = fopen(newfilename, "wb");
                 int sent = sendData(sockfd, tmpfilepath, strlen(tmpfilepath));
-
                 struct pollfd fds;
                 fds.events = POLLIN | POLLRDHUP;
                 fds.fd = sockfd;
@@ -100,7 +101,6 @@ int resposeHanlder(int fd, int code, FileShareInfor temp, int port_share, char *
                         break;
                     }
                     if(ret == 0){
-                        perror("timeout");
                         break;
                     }
                     if(fds.revents & POLLIN){
@@ -109,30 +109,29 @@ int resposeHanlder(int fd, int code, FileShareInfor temp, int port_share, char *
                         count_size += recvC;
                         fputc(ch, f);
                     }
-                    else if(fds.revents & POLLRDHUP){      
-                        printf("Close connect from download: %s\n", filename);
+                    if(fds.revents & POLLRDHUP){      
+                        printf("Download complete\n");
+                        fds.fd = 0;
                         break;
                     }
                 }
-                if(count_size == temp->size_file){
-                    printf("Download complete: %s : %d\n", filename, count_size);
-                }
+                close(sockfd);
                 fclose(f);
             }
             return code;
         }
     }
     else if(code == UPLOAD_FILE_REQUEST_){
-        printf("start update file\n");
+        printf("Start update file\n");
         char tmp[100];
         recv(fd, tmp, sizeof(tmp), 0);
         FileShareInfor fsInforUpdate = (FileShareInfor)malloc(sizeof(struct fileShareInfor));
         char filepath[PATH_MAX];
         char *filename = cmd + strlen(uploadfile1) + 1;
         char *res = realpath(filename, filepath);
-        printf("send file: %s\n", filepath);
+        printf("Uploading.........\n");
         if(res == NULL){
-            printf("realpath failed\n");
+            printf("Filepath invalid\n");
             return NONE_REQUEST_;
         }
         else{
@@ -141,21 +140,72 @@ int resposeHanlder(int fd, int code, FileShareInfor temp, int port_share, char *
             stat(filepath, &st);
             fsInforUpdate->size_file = st.st_size;
             fsInforUpdate->port = port_share;
-
             int sent = sendDataStruct(fd, fsInforUpdate, sizeof(struct fileShareInfor));
             sleep(2);
             int code;
             recvDataStruct(fd, &code, sizeof(int));
             if(code == SUCCESS_RESPONSE_){
-                printf("update file success\n");
+                printf("Update file success\n");
             }  
             if(code == FAIL_RESPONSE_){
-                printf("update file failed\n");
+                printf("Update file failed\n");
             }
         } 
         new_code = NONE_REQUEST_;
     }
     return new_code;
+}
+
+int create_file_to_download(char *filename, char *new_filename){
+    FILE *fp;
+    int i = 1;
+    fp = fopen(filename, "r");
+    strcpy(new_filename, filename);
+    if (fp != NULL)
+    {   
+        fclose(fp);
+        char tmp[100];
+        char duoifile[20];
+        strcpy(tmp, filename);
+        char *p = strstr(tmp, "."); // luu duoi file vao p : (.jpeg)
+        strcpy(duoifile, p);
+        char *p2 = strtok(tmp, "."); //tenfile khong chua duoi
+        char countstr[10];
+        sprintf(countstr, "%d", i);
+        strcat(p2, countstr);
+        strcat(p2, duoifile);
+        strcpy(new_filename, p2);
+        while ((fp = fopen(new_filename, "r")) != NULL)
+        {   
+            fclose(fp);
+            i++;
+            strcpy(tmp, filename);
+            char *p2 = strtok(tmp, "."); //tenfile khong chua duoi
+            char countstr[10];
+            sprintf(countstr, "%d", i);
+            strcat(p2, countstr);
+            strcat(p2, duoifile);
+            strcpy(new_filename, p2);
+        }
+        fp = fopen(new_filename, "w");
+        if (fp == NULL)
+        {
+            printf("Can't create file %s\n", new_filename);
+            return -1;
+        }
+        printf("Create file complete %s\n", new_filename);
+    }
+    else{
+        fp = fopen(filename, "w");
+        if (fp == NULL)
+        {
+            printf("Cant't create file %s\n", filename);
+            return 1;
+        }
+        printf("Create file: %s\n", filename);
+    }
+    fclose(fp);
+    return 1;
 }
 
 const char* getRequestName(enum RequestCode requestcode) 

@@ -45,5 +45,8 @@ int commandHanlder(char *command, int fd){
         printf("Exiting...\n");
         exit(0);
     }
+    else{
+        printf("Command: '%s' invalid\n", command);
+    }
     return NONE_REQUEST_;
 }
